@@ -1,0 +1,11 @@
+1) 
+multiple inheritance als je het niet vind via eerste parent zoek in tweede parent. 
+implementatie basis versie => inheritance is een pad naar de root, vraag aan root geeft error
+implementatie mijn versie  => wrapper gemaakt
+							  send class => eval
+							  gevonden return
+							  niet gevonden => parent lookup
+
+2) gelijke variabelen
+implementatie basis versie => copy variabelen van parent, overschrijf self
+implementatie mijn versie  => copy variabelen alle parent (meerdere selfs), overschrijf als ze al bestaan
