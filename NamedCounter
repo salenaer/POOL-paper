@@ -1,0 +1,32 @@
+(define Counter
+  (CPPCLASS 
+   "Counter"
+   (list Root)
+   (VAR count 0)
+   (METHOD incr ()
+           (! count (+ (? count) 1)))
+   (METHOD decr ()
+           (! count (- (? count) 1)))
+   (METHOD value ()
+           (? count))))
+
+(define ProtectedCounter
+  (CPPCLASS 
+   "ProtectedCounter"
+   (list Counter)
+   (VAR max 10)
+   (METHOD incr ()
+           (if (< (SEND (SELF) value) (? max))
+               (SUPER "Counter" incr)
+               (display "Counter overflow")))
+   (METHOD decr ()
+           (if (> (SEND (SELF) value) 0)
+               (SUPER "Counter" decr)
+               (display "Counter underflow")))))
+
+(define counter (NEW Counter))
+(SEND counter incr)
+(SEND counter incr)
+(SEND counter value)
+(SEND counter decr)
+(SEND counter value)
