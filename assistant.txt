@@ -78,6 +78,6 @@
 (define guillermo (NEW Assistent))
 (SEND guillermo set-name "guillermo")
 (SEND guillermo set-adress "Pleinlaan 2")
-(SEND guillermo set-studentID 123456)
-(SEND guillermo set-personnelID 654321)
+(SEND guillermo set-studentId 123456)
+(SEND guillermo set-personnelId 654321)
 (SEND guillermo set-faculty "computerscience")

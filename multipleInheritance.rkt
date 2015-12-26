@@ -53,9 +53,9 @@
        (let* ((key (car rest))
               (entry (massoc key tab))
               (value (cadr rest)))
-         (if entry
-             (set-mcdr! entry value)
-             (set! tab (mcons (mcons key value) tab)))))
+         (cond ((and entry (eq? (mcdr entry) value)) 'do-nothing)
+               (entry (error "dupicate variable with different value for:" key "original value:" (mcdr entry) "newvalue:" value))
+               (else (set! tab (mcons (mcons key value) tab))))))
       )))
 
 (define Root
@@ -120,38 +120,66 @@
 
 (define (SUPERS input)
   (let ((sups (reverse input)))
-  (lambda (op . args)
-    (case op
-      ((<<LOOKUP>>)
-       (let
-           ((context (car args))
-            (msg (cadr args))
-            (args (caddr args)))
-         (super-lookup sups context msg args)))         
-      ((<<COPY>>)
-       (let ((table ((car sups) '<<COPY>>))
-             (rest (cdr sups)))
-         (for-each
-          (lambda (some-super)
-            (set! table (some-super '<<COPY-INTO>> table)))
-          rest) ; copy into => if it already exists give error
-         table))
-      ((<<EVAL>>)
-       (let*
-           ((context (car args))
-            (msg (cadr args))
-            (args (caddr args))
-            (return (super-lookup sups context msg args)))
-         (if (found? return)
-             (found-value return)
-             (error "method not found " (found-value return)))))
-      (else
-       (error "invalid supers message " op))))))
+    (lambda (op . args)
+      (case op
+        ((<<LOOKUP>>)
+         (let
+             ((context (car args))
+              (msg (cadr args))
+              (args (caddr args)))
+           (super-lookup sups context msg args)))         
+        ((<<COPY>>)
+         (let ((table ((car sups) '<<COPY>>))
+               (rest (cdr sups)))
+           (for-each
+            (lambda (some-super)
+              (set! table (some-super '<<COPY-INTO>> table)))
+            rest) ; copy into => if it already exists give error
+           table))
+        ((<<EVAL>>)
+         (let*
+             ((context (car args))
+              (msg (cadr args))
+              (args (caddr args))
+              (return (super-lookup sups context msg args)))
+           (if (found? return)
+               (found-value return)
+               (error "method not found " (found-value return)))))
+        (else
+         (error "invalid supers message " op))))))
+
+(define (rename lst class)
+  (define (translate msg)
+    (let ((entry (assoc msg lst)))
+      (if entry
+          (cdr entry)
+          msg)))
+  (let ((<<RENAMEDCLASS>>
+        (lambda (msg . args)
+          (case msg
+            ((<<LOOKUP>>)
+             (let*
+                 ((context (car args))
+                  (msg (cadr args))
+                  (args (caddr args)))
+               (class '<<LOOKUP>> context (translate msg) args)))
+            ((<<EVAL>>)
+             (let*
+                 ((context (car args))
+                  (msg (cadr args))
+                  (args (caddr args)))
+               (class '<<EVAL>> context (translate msg) args)))
+            (else
+             ; . args zet args in een lijst
+             ; class msg args voert functie uit met args in lijst
+             ; apply gaat functie uitvoeren op args
+             (apply class msg args)))))) 
+    <<RENAMEDCLASS>>))
 
 (define-macro CLASS
   (lambda (supers . defs)
     `(letrec
-         ((<<SUPERS>> (SUPERS ,supers))
+         ((<<SUPERS>> (SUPERS ,supers)) ;aangepast
           (<<METHODS>> (<<TABLE>>))
           (<<VARS>> (<<SUPERS>> '<<COPY>>))
           (<<CLASS>>
@@ -165,7 +193,7 @@
                         (<<CLASS>> '<<EVAL>> context msg args))))
                   (context 'replace '<<SELF>> self)
                   self))
-               ((<<EVAL>>)
+               ((<<EVAL>>) ;aangepast
                 (let*
                     ((context (car args))
                      (msg (cadr args))
@@ -178,7 +206,7 @@
                             (found-value return)
                             (error "method not found " (found-value return))))
                       )))
-               ((<<LOOKUP>>)
+               ((<<LOOKUP>>) ;aangepast
                 (let*
                     ((context (car args))
                      (msg (cadr args))
@@ -250,7 +278,8 @@
          ))
 
 (define Assistent
-  (CLASS (list Personnel Student)
+  (CLASS (list (rename (list (cons 'print 'studentprint)) Student)
+               Personnel)
          (VAR PhDThesis void)
          (METHOD set-PhDThesis  (newPHD)
                  (! PhDThesis  newPHD))
