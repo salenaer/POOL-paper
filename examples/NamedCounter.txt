@@ -1,7 +1,7 @@
 (define Counter
-  (CPPCLASS 
-   "Counter"
-   (list Root)
+  (CLASS 
+   Counter
+   (Root)
    (VAR count 0)
    (METHOD incr ()
            (! count (+ (? count) 1)))
@@ -11,9 +11,9 @@
            (? count))))
 
 (define ProtectedCounter
-  (CPPCLASS 
-   "ProtectedCounter"
-   (list Counter)
+  (CLASS 
+   ProtectedCounter
+   (Counter)
    (VAR max 10)
    (METHOD incr ()
            (if (< (SEND (SELF) value) (? max))

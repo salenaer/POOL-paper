@@ -1,0 +1,32 @@
+(define A
+  (CLASS 
+   A
+   (Root)
+   (METHOD print ()
+           (display "called print in a"))))
+
+(define B
+  (CLASS 
+   B
+   (A)
+   (METHOD print ()
+           (display "called print in b"))))
+(define C
+  (CLASS 
+   C
+   (A)
+   (METHOD print ()
+           (display "called print in c"))))
+(define D
+  (CLASS 
+   D
+   (B C)
+   (METHOD print ()
+           (display "called print in d"))
+   (METHOD print-specific ()
+           (SUPER A print))))
+
+(define a (NEW A))
+(define b (NEW B))
+(define c (NEW C))
+(define d (NEW D))

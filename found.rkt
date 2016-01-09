@@ -2,7 +2,6 @@
   (define foundValue 'found)
   (define notfound 'notfound)
 
-  
   (define (not-found x) (cons notfound x))
   (define (found x) (cons foundValue x))
   

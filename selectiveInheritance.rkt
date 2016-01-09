@@ -67,7 +67,7 @@
        (let*
            ((msg (cadr args)))
          (not-found msg)))
-      ((<<SPECIFIC-LOOKUP>>)
+      ((<<SPECIFIC-LOOKUP>>) ;aangepast
        (let*
            ((msg (caddr args)))
          (not-found msg)))
@@ -111,7 +111,7 @@
 
 (define-macro SUPER 
   (lambda (target msg . args)
-    `(<<SUPERS>> '<<EVAL>> ,target <<CONTEXT>> ',msg ,args))) ;aangepast
+    `(<<SUPERS>> '<<EVAL>> ',target <<CONTEXT>> ',msg ,args))) ;aangepast
 
 ;--------------------------------------------------------------------------------------------------------------------
 (define (super-lookup supers function fail)
@@ -119,17 +119,6 @@
     (if (null? lst)
         (fail)
         (let ((entry (function (car lst))))
-          (if (found? entry)
-              entry
-              (iter (cdr lst))))))
-  (iter supers))
-
-(define (super-specific-lookup supers target context msg args)
-  (display context)
-  (define (iter lst)
-    (if (null? lst)
-        (not-found msg)
-        (let ((entry ((car lst) '<<SPECIFIC-LOOKUP>> target msg context args)))
           (if (found? entry)
               entry
               (iter (cdr lst))))))
@@ -157,7 +146,7 @@
          table))
       ((<<EVAL>>)
        (let*
-           ((target (car args))
+           ((target (car args)) ;aangepast
             (context (cadr args))
             (msg (caddr args))
             (args (cadddr args))
@@ -167,7 +156,7 @@
          (if (found? return)
              (found-value return)
              (error "method not found " (found-value return)))))
-      ((<<SPECIFIC-LOOKUP>>)
+      ((<<SPECIFIC-LOOKUP>>) ;aangepast
        (let*
            ((target (car args))
             (context (cadr args))
@@ -179,11 +168,11 @@
       (else
        (error "invalid supers message " op))))))
 
-(define-macro CPPCLASS
+(define-macro CLASS
   (lambda (name supers . defs)
     `(letrec
-         ((<<SUPERS>> (SUPERS ,supers))
-          (<<NAME>> ,name)
+         ((<<SUPERS>> (SUPERS (list ,@supers)))
+          (<<NAME>> ',name)
           (<<METHODS>> (<<TABLE>>))
           (<<VARS>> (<<SUPERS>> '<<COPY>>))
           (<<CLASS>>
@@ -219,7 +208,7 @@
                   (if entry
                       (found (apply entry (cons context args)))
                       (<<SUPERS>> '<<LOOKUP>> context msg args))))
-               ((<<SPECIFIC-LOOKUP>>)
+               ((<<SPECIFIC-LOOKUP>>) ;aangepast
                 (let*
                     ((target (car args))
                      (context (cadr args))
@@ -239,35 +228,35 @@
        ,@defs
        <<CLASS>>)))
 ;-------------------------------------------------------------------------------------------------------------------------
-(define A
-  (CPPCLASS 
-   "A"
-   (list Root)
-   (METHOD print ()
-           (display "called print in a"))))
+(define Counter
+  (CLASS 
+   Counter
+   (Root)
+   (VAR count 0)
+   (METHOD incr ()
+           (! count (+ (? count) 1)))
+   (METHOD decr ()
+           (! count (- (? count) 1)))
+   (METHOD value ()
+           (? count))))
 
-(define B
-  (CPPCLASS 
-   "B"
-   (list A)
-   (METHOD print ()
-           (display "called print in b"))))
-(define C
-  (CPPCLASS 
-   "C"
-   (list A)
-   (METHOD print ()
-           (display "called print in c"))))
-(define D
-  (CPPCLASS 
-   "D"
-   (list B C)
-   (METHOD print ()
-           (display "called print in d"))
-   (METHOD specific-print (object)
-           (SUPER object print))))
+(define ProtectedCounter
+  (CLASS 
+   ProtectedCounter
+   (Counter)
+   (VAR max 10)
+   (METHOD incr ()
+           (if (< (SEND (SELF) value) (? max))
+               (SUPER "Counter" incr)
+               (display "Counter overflow")))
+   (METHOD decr ()
+           (if (> (SEND (SELF) value) 0)
+               (SUPER "Counter" decr)
+               (display "Counter underflow")))))
 
-(define a (NEW A))
-(define b (NEW B))
-(define c (NEW C))
-(define d (NEW D))
+(define counter (NEW Counter))
+(SEND counter incr)
+(SEND counter incr)
+(SEND counter value)
+(SEND counter decr)
+(SEND counter value)

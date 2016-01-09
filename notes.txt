@@ -9,3 +9,11 @@ implementatie mijn versie  => wrapper gemaakt
 2) gelijke variabelen
 implementatie basis versie => copy variabelen van parent, overschrijf self
 implementatie mijn versie  => copy variabelen alle parent (meerdere selfs), overschrijf als ze al bestaan
+
+3) rename
+kan de methode van de parent niet aanpassen => maak rapper object dat lookups and evals vertaald. 
+werkt maar syntax moet beter
+
+4) specifieke lookup
+vroeger lookup enkel in parents door map te maken parents naam en parents
+nu recursieve lookup die ook parents parent kan doorzoeken.

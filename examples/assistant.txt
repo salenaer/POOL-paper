@@ -1,5 +1,5 @@
 (define Person
-  (CLASS (list Root)
+  (CLASS (Root)
          (VAR name void)
          (VAR adress void)
          (METHOD set-name (newName)
@@ -16,7 +16,7 @@
          ))
 
 (define Student
-  (CLASS (list Person)
+  (CLASS (Person)
          (VAR studentId void)
          (VAR faculty void)
          (METHOD set-studentId (newID)
@@ -34,7 +34,7 @@
          ))
 
 (define Personnel
-  (CLASS (list Person)
+  (CLASS (Person)
          (VAR personnelId void)
          (VAR faculty void)
          (METHOD set-personnelId (newID)
@@ -52,7 +52,8 @@
          ))
 
 (define Assistent
-  (CLASS (list Personnel Student)
+  (CLASS (Student
+               (RENAME ((BY print personelPrint)) Personnel))
          (VAR PhDThesis void)
          (METHOD set-PhDThesis  (newPHD)
                  (! PhDThesis  newPHD))
@@ -63,11 +64,11 @@
                  (display "PhDThesis: ")(display (? PhDThesis:))(newline))
          ))
 
-(define noah (NEW Student))
-(SEND noah set-name "noah")
-(SEND noah set-adress "Merchtem")
-(SEND noah set-studentId 500305)
-(SEND noah set-faculty "computerscience")
+(define sander (NEW Student))
+(SEND sander set-name "sander")
+(SEND sander set-adress "Wambeek")
+(SEND sander set-studentId 500201)
+(SEND sander set-faculty "computerscience")
 
 (define andy (NEW Personnel))
 (SEND andy set-name "andy")

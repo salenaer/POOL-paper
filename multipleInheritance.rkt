@@ -1,5 +1,6 @@
 (require mzlib/defmacro)
 (require scheme/mpair)
+(require racket/list)
 
 (require "found.rkt")
 
@@ -134,7 +135,7 @@
            (for-each
             (lambda (some-super)
               (set! table (some-super '<<COPY-INTO>> table)))
-            rest) ; copy into => if it already exists give error
+            rest)
            table))
         ((<<EVAL>>)
          (let*
@@ -176,10 +177,26 @@
              (apply class msg args)))))) 
     <<RENAMEDCLASS>>))
 
+(define (flatten lst)
+  (define (loop lst iter)
+    (if (null? lst)
+        iter
+        (loop (cdr lst) (cons (caar lst) (cons (cdar lst) iter)))))
+  (loop lst '()))
+
+(define-macro (RENAME lst class)
+  `(rename
+    (flatten (list ,@lst))
+    ,class))
+
+(define-macro BY
+  (lambda (a b)
+  `(cons (cons ',a ',b)(cons ',b ',a))))
+
 (define-macro CLASS
   (lambda (supers . defs)
     `(letrec
-         ((<<SUPERS>> (SUPERS ,supers)) ;aangepast
+         ((<<SUPERS>> (SUPERS (list ,@supers))) ;aangepast
           (<<METHODS>> (<<TABLE>>))
           (<<VARS>> (<<SUPERS>> '<<COPY>>))
           (<<CLASS>>
@@ -204,8 +221,7 @@
                       (let ((return (<<SUPERS>> '<<LOOKUP>> context msg args)))
                         (if (found? return)
                             (found-value return)
-                            (error "method not found " (found-value return))))
-                      )))
+                            (error "method not found " (found-value return)))))))
                ((<<LOOKUP>>) ;aangepast
                 (let*
                     ((context (car args))
@@ -224,87 +240,33 @@
        ,@defs
        <<CLASS>>)))
 ;-------------------------------------------------------------------------------------------------------------------------
-(define Person
-  (CLASS (list Root)
-         (VAR name void)
-         (VAR adress void)
-         (METHOD set-name (newName)
-                 (! name newName))
-         (METHOD set-adress (newAdress)
-                 (! adress newAdress))
-         (METHOD get-name ()
-                 (? name))
-         (METHOD get-adress ()
-                 (? adress))
+(define A
+  (CLASS (Root)
          (METHOD print ()
-                 (display "name: ")(display (? name))(newline)
-                 (display "adress: ")(display (? adress))(newline))
+              (display "print of A called")(newline))
          ))
 
-(define Student
-  (CLASS (list Person)
-         (VAR studentId void)
-         (VAR faculty void)
-         (METHOD set-studentId (newID)
-                 (! studentId newID))
-         (METHOD set-faculty (newFaculty)
-                 (! faculty newFaculty))
-         (METHOD get-studentId ()
-                 (? studentId))
-         (METHOD get-faculty ()
-                 (? faculty))
+(define B
+  (CLASS (Root)
          (METHOD print ()
-                 (SUPER print)
-                 (display "studentId: ")(display (? studentId))(newline)
-                 (display "faculty: ")(display (? faculty))(newline))
+              (display "print of B called")(newline))
+         ))
+(define Child
+  (CLASS ((RENAME ((BY print aPrint)) A)
+          (RENAME ((BY print bPrint)) B))
+         (METHOD printWithA ()
+                 (SUPER aPrint)
+                 (SEND (SELF) print))
+         (METHOD printWithB ()
+                 (SUPER bPrint)
+                 (SEND (SELF) print))
+         (METHOD printWithBoth ()
+                 (SUPER aPrint)
+                 (SUPER bPrint)
+                 (SEND (SELF) print))
+         (METHOD print ()
+                 (display "print of C called")(newline))
+
          ))
 
-(define Personnel
-  (CLASS (list Person)
-         (VAR personnelId void)
-         (VAR faculty void)
-         (METHOD set-personnelId (newID)
-                 (! personnelId newID))
-         (METHOD set-faculty (newFaculty)
-                 (! faculty newFaculty))
-         (METHOD get-personnelId ()
-                 (? personnelId))
-         (METHOD get-faculty ()
-                 (? faculty))
-         (METHOD print ()
-                 (SUPER print)
-                 (display "personnelId: ")(display (? personnelId))(newline)
-                 (display "faculty: ")(display (? faculty))(newline))
-         ))
-
-(define Assistent
-  (CLASS (list (rename (list (cons 'print 'studentprint)) Student)
-               Personnel)
-         (VAR PhDThesis void)
-         (METHOD set-PhDThesis  (newPHD)
-                 (! PhDThesis  newPHD))
-         (METHOD get-PhDThesis ()
-                 (? PhDThesis))
-         (METHOD print ()
-                 (SUPER print)
-                 (display "PhDThesis: ")(display (? PhDThesis:))(newline))
-         ))
-
-(define noah (NEW Student))
-(SEND noah set-name "noah")
-(SEND noah set-adress "Merchtem")
-(SEND noah set-studentId 500305)
-(SEND noah set-faculty "computerscience")
-
-(define andy (NEW Personnel))
-(SEND andy set-name "andy")
-(SEND andy set-adress "10F732")
-(SEND andy set-personnelId 6293581)
-(SEND andy set-faculty "computerscience")
-
-(define guillermo (NEW Assistent))
-(SEND guillermo set-name "guillermo")
-(SEND guillermo set-adress "Pleinlaan 2")
-(SEND guillermo set-studentId 123456)
-(SEND guillermo set-personnelId 654321)
-(SEND guillermo set-faculty "computerscience")
+(define josh (NEW Child))

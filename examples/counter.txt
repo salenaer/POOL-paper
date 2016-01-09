@@ -1,5 +1,5 @@
 (define Counter
-  (CLASS (list Root)
+  (CLASS (Root)
                  (VAR count 0)
                  (METHOD incr ()
                          (! count (+ (? count) 1)))
@@ -9,7 +9,7 @@
                          (? count))))
 
 (define ProtectedCounter
-  (CLASS (list Counter)
+  (CLASS (Counter)
                  (VAR max 10)
                  (METHOD incr ()
                          (if (< (SEND (SELF) value) (? max))
